@@ -297,6 +297,25 @@ void setBoneRotation(void)
 {
 	// Uppgift 3 TODO: H�r beh�ver du skicka �ver benens rotation
 	// till vertexshadern
+        glUniformMatrix4fv(glGetUniformLocation(g_shader, "rotation0"), 1, GL_TRUE, g_bones[0].rot.m);
+        glUniformMatrix4fv(glGetUniformLocation(g_shader, "rotation1"), 1, GL_TRUE, g_bones[1].rot.m);
+        
+        mat4 M0,M1;
+        Bone b1 = g_bones[0];
+        
+        mat4 trans1 = T(-b1.pos.x,-b1.pos.y,-b1.pos.z);
+        mat4 trans2 = T(b1.pos.x,b1.pos.y,b1.pos.z);
+        M0 = Mult(trans2,(Mult(b1.rot, trans1)));
+
+
+        Bone b2 = g_bones[1];
+        trans1 = T(-b2.pos.x,-b2.pos.y,-b2.pos.z);
+        trans2 = T(b2.pos.x,b2.pos.y,b2.pos.z);
+        M1 = Mult(trans2,(Mult(b2.rot, trans1)));       
+        
+        glUniformMatrix4fv(glGetUniformLocation(g_shader, "M0"), 1, GL_TRUE, M0.m);
+        glUniformMatrix4fv(glGetUniformLocation(g_shader, "M1"), 1, GL_TRUE, M1.m);
+    
 }
 
 
@@ -307,6 +326,8 @@ void setBoneLocation(void)
 {
 	// Uppgift 3 TODO: H�r beh�ver du skicka �ver benens position
 	// till vertexshadern
+        glUniform3f(glGetUniformLocation(g_shader, "pos0"),  g_bones[0].pos.x,g_bones[0].pos.y,g_bones[0].pos.z);
+        glUniform3f(glGetUniformLocation(g_shader, "pos1"),  g_bones[1].pos.x,g_bones[1].pos.y,g_bones[1].pos.z);
 }
 
 
@@ -321,7 +342,7 @@ void DrawCylinder()
 	// Ers�tt DeformCylinder med en vertex shader som g�r vad DeformCylinder g�r.
 	// Begynnelsen till shaderkoden ligger i filen "shader.vert" ...
 
-	DeformCylinder();
+	//DeformCylinder();
 
 	setBoneLocation();
 	setBoneRotation();
