@@ -68,7 +68,7 @@ Point3D g_normalsRes[kMaxRow][kMaxCorners];
 // vertex attributes sent to OpenGL
 Point3D g_boneWeights[kMaxRow][kMaxCorners];
 
-float weight[kMaxRow] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.99, 1.0, 1.0, 1.0, 1.0};
+float weight[kMaxRow] = {0.0, 0.0, 0.0, 0.15, 0.35, 0.65, 0.85, 1.0, 1.0, 1.0};
 
 Model *cylinderModel; // Collects all the above for drawing with glDrawElements
 
@@ -196,10 +196,13 @@ void DeformCylinder()
 	// f�r samtliga vertexar
 	for (row = 0; row < kMaxRow; row++)
 	{
-		float w = weight[row];
+		//float w = weight[row];
 		mat4 Mbone1,Mbone2;
 
+                
+                /* Uppgift 1 lösning
 		if(w == 0.0f){
+                    
 			Bone b = g_bones[0];
 			mat4 trans1 = T(-b.pos.x,-b.pos.y,-b.pos.z);
 			mat4 trans2 = T(b.pos.x,b.pos.y,b.pos.z);
@@ -211,12 +214,29 @@ void DeformCylinder()
 			mat4 trans1 = T(-b.pos.x,-b.pos.y,-b.pos.z);
 			mat4 trans2 = T(b.pos.x,b.pos.y,b.pos.z);
 			Mbone2 = Mult(trans2,(Mult(b.rot, trans1)));
-		}
+		}*/
+	
+                    
+			Bone b1 = g_bones[0];
+			mat4 trans1 = T(-b1.pos.x,-b1.pos.y,-b1.pos.z);
+			mat4 trans2 = T(b1.pos.x,b1.pos.y,b1.pos.z);
+			Mbone1 = Mult(trans2,(Mult(b1.rot, trans1)));
+		
+
+			Bone b2 = g_bones[1];
+			trans1 = T(-b2.pos.x,-b2.pos.y,-b2.pos.z);
+			trans2 = T(b2.pos.x,b2.pos.y,b2.pos.z);
+			Mbone2 = Mult(trans2,(Mult(b2.rot, trans1)));
+	
+		
+		
 
 
 		for (corner = 0; corner < kMaxCorners; corner++)
 		{
 
+                    
+                    
 			//g_vertsRes[row][corner] = g_vertsOrg[row][corner]; // no transformation just copy original
 
 			// ----=========	Uppgift 1: Hard skinning (stitching) i CPU ===========-----
@@ -266,7 +286,7 @@ void animateBones(void)
 
 	// rotera p� ben 1
 	g_bones[1].rot = Rz(angle);
-	//printf("%f %f\n", angle, time);
+	//printf("%f %f\n", angle, time);float
 }
 
 
