@@ -63,7 +63,8 @@ void main(void)
 	//vec3 vm1 = ScalarMult(MultVec3(Mbone1,vm),g_boneWeights[row][corner].x);
 
 	
-	gl_Position = matrix * (vm0 + vm1);
+	//gl_Position = matrix * (vm0 + vm1);
+	gl_Position = matrix * vec4(in_Position, 1.0);
 
 	// sätt röd+grön färgkanal till vertex Weights
 	vec4 color = vec4(in_TexCoord.x, in_TexCoord.y, 0.0, 1.0);

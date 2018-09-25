@@ -87,6 +87,7 @@ Model *cylinderModel; // Collects all the above for drawing with glDrawElements
 
 mat4 modelViewMatrix, projectionMatrix;
 
+mat4 inv_bone_M[kMaxBones];
 ///////////////////////////////////////////////////
 //		I N I T  B O N E  W E I G H T S
 // Desc:  initierar benvikterna
@@ -239,7 +240,24 @@ void setupBones(void)
 	g_bones[bone].rot = IdentityMatrix();
   }
 }
-
+void InitInverseMs(void){
+    
+    //mat4 T0 = T(g_bones[0].pos.x,g_bones[0].pos.y,g_bones[0].pos.z);
+    //mat4 M0 = Mult(T0,g_bones[0].rot);
+    inv_bone_M[0] = InvertMat4(Mult(T(g_bones[0].pos.x, g_bones[0].pos.y, g_bones[0].pos.z), g_bones[0].rot));
+    
+    mat4 T_temp;
+    
+    for (int i = 1; i < kMaxBones; i++)
+    {
+         T_temp = T(g_bones[i].pos.x - g_bones[i-1].pos.x,
+                    g_bones[i].pos.y - g_bones[i-1].pos.y,
+                    g_bones[i].pos.z - g_bones[i-1].pos.z);
+         
+         inv_bone_M[i] = Mult(InvertMat4(Mult(T_temp, g_bones[i].rot)) , inv_bone_M[i-1]);
+    }
+    
+}
 
 ///////////////////////////////////////////////////////
 //		D E F O R M  C Y L I N D E R 
@@ -251,22 +269,55 @@ void DeformCylinder()
 
   //float w[kMaxBones];
   int row, corner;
+  
+    mat4 Mdeluxze[kMaxBones]; //prim * inverse
+    mat4 Mprim[kMaxBones];
+    mat4 M_current;
+    
+    //Räkna ut vad varje ben får för matriser
+    mat4 T0 = T(g_bonesRes[0].pos.x, g_bonesRes[0].pos.y, g_bonesRes[0].pos.z);
+    
+    Mprim[0] = Mult(T0, g_bonesRes[0].rot);
+    Mdeluxze[0] = Mult(Mprim[0], inv_bone_M[0]);
+    
+    for (int i = 1; i < kMaxBones; i++)
+    {
+        mat4 T_temp = T(g_bonesRes[i].pos.x - g_bonesRes[i-1].pos.x,
+                            g_bonesRes[i].pos.y - g_bonesRes[i-1].pos.y,
+                            g_bonesRes[i].pos.z - g_bonesRes[i-1].pos.z);
+        
+        M_current = Mult(T_temp, g_bonesRes[i].rot);
+        
+        Mprim[i] = Mult(Mprim[i-1], M_current);
+        Mdeluxze[i] = Mult(Mprim[i], inv_bone_M[i]);
+        
+    }
 
   // för samtliga vertexar 
   for (row = 0; row < kMaxRow; row++)
   {
     for (corner = 0; corner < kMaxCorners; corner++)
     {
-      // ---------=========  UPG 4 ===========---------
-      // TODO: skinna meshen mot alla benen.
-      //
-      // data som du kan använda:
-      // g_bonesRes[].rot
-      // g_bones[].pos
-      // g_boneWeights
-      // g_vertsOrg
-      // g_vertsRes
-      
+        // ---------=========  UPG 4 ===========---------
+        // TODO: skinna meshen mot alla benen.
+        //
+        // data som du kan använda:
+        // g_bonesRes[].rot
+        // g_bones[].pos
+        // g_boneWeights
+        // g_vertsOrg
+        // g_vertsRes
+        vec3 sum = {0.0,0.0,0.0};
+        for (int boneIndex = 0; boneIndex <  kMaxBones; boneIndex++)
+        {
+            vec3 newPos = MultVec3(Mdeluxze[boneIndex],g_vertsOrg[row][corner]);
+            vec3 weightedNewPos = ScalarMult(newPos ,g_boneWeights[row][corner][boneIndex]);
+            sum = VectorAdd(sum ,weightedNewPos);
+            
+        }
+
+        g_vertsRes[row][corner] = sum;
+    
     }
   }
 }
@@ -280,7 +331,7 @@ void animateBones(void)
 {
 	int bone;
 	// Hur mycket kring varje led? €ndra gŠrna.
-	float angleScales[10] = { 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f };
+	float angleScales[10] = {1.f, -1.f, -1.f, 1.f, 1.f, -0.7f, -0.5f, 1.f, 3.f, 4.f };
 
 	float time = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
 	// Hur mycket skall vi vrida?
@@ -405,6 +456,7 @@ int main(int argc, char **argv)
 #endif
   BuildCylinder();
   setupBones();
+  
   initBoneWeights();
 
   	// Build Model from cylinder data
@@ -416,7 +468,7 @@ int main(int argc, char **argv)
 			(GLuint*) g_poly, // indices
 			kMaxRow*kMaxCorners,
 			kMaxg_poly * 3);
-
+  InitInverseMs();
   g_shader = loadShaders("shader.vert" , "shader.frag");
 
   glutMainLoop();
